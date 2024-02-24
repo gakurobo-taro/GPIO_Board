@@ -82,15 +82,13 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == GPIOBoard::pwm_timer){
-    	LL_GPIO_SetOutputPin(LED_G_GPIO_Port, LED_G_Pin);
     	for(auto &io:GPIOBoard::IO){
     		io.update();
     	}
-    	GPIOBoard::LED_G.out_as_gpio(false);
-    	LL_GPIO_ResetOutputPin(LED_G_GPIO_Port, LED_G_Pin);
+    	GPIOBoard::LED_G.out_as_gpio(true);
     }else if(htim == GPIOBoard::monitor_timer){
     	GPIOBoard::LED_R.out_as_gpio(true);
-    	//GPIOBoard::monitor_task();
+    	GPIOBoard::monitor_task();
     }
 }
 
@@ -133,13 +131,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   GPIOBoard::init();
 
-  for(auto &io:GPIOBoard::IO){
-	  io.set_period(50000);
-  	  io.set_duty(25000);
-	}
-  LL_GPIO_SetPinMode(LED_G_GPIO_Port, LED_G_Pin, LL_GPIO_MODE_OUTPUT);
-
   HAL_TIM_Base_Start_IT(GPIOBoard::pwm_timer);
+  HAL_TIM_Base_Start_IT(GPIOBoard::monitor_timer);
+
+  //GPIOBoard::set_monitor_period(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -150,6 +145,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  GPIOBoard::main_data_process();
+	  GPIOBoard::LED_R.out_as_gpio(false);
+	  GPIOBoard::LED_G.out_as_gpio(false);
+	  GPIOBoard::LED_B.out_as_gpio(false);
   }
   /* USER CODE END 3 */
 }

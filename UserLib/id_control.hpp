@@ -13,21 +13,19 @@
 
 namespace G24_STM32HAL::GPIOLib{
 
-	struct DataManager{
+	class DataManager{
+	private:
 		std::function<bool(CommonLib::ByteReader&)> f_set;
 		std::function<bool(CommonLib::ByteWriter&)> f_get;
+	public:
 		DataManager(std::function<bool(CommonLib::ByteReader&)>&& _write,
 				std::function<bool(CommonLib::ByteWriter&)>&&_read):
-			f_set(_write),f_get(_read){
-		}
+			f_set(_write),f_get(_read){}
+
 		//byte->ref
-		bool set(CommonLib::ByteReader& r){
-			return f_set?f_set(r):false;
-		}
+		bool set(CommonLib::ByteReader& r){ return f_set ? f_set(r) : false; }
 		//ref->byte
-		bool get(CommonLib::ByteWriter& w){
-			return f_get?f_get(w):false;
-		}
+		bool get(CommonLib::ByteWriter& w){ return f_get ? f_get(w) : false; }
 
 		template<class T> static DataManager generate(T& ref){
 			auto readf = [&](CommonLib::ByteReader& r){
@@ -85,21 +83,21 @@ namespace G24_STM32HAL::GPIOLib{
 
 
 	class IDMap{
-		std::unordered_map<int, DataManager> cells;
 	public:
-		IDMap(std::unordered_map<int, DataManager>&& _cells):cells(_cells){}
+		std::unordered_map<size_t, DataManager> managers_map;
+		IDMap(std::unordered_map<size_t, DataManager>&& _managers_map):managers_map(_managers_map){}
 
 		bool set(int id,CommonLib::ByteReader& r){
-			auto iter=cells.find(id);
-			if (iter!=cells.end()){
-				return iter->second.f_set(r);
+			auto iter=managers_map.find(id);
+			if (iter!=managers_map.end()){
+				return iter->second.set(r);
 			}
 			return false;
 		}
 		bool get(int id,CommonLib::ByteWriter& w){
-			auto iter=cells.find(id);
-			if (iter!=cells.end()){
-				return iter->second.f_get(w);
+			auto iter=managers_map.find(id);
+			if (iter!=managers_map.end()){
+				return iter->second.get(w);
 			}
 			return false;
 		}
@@ -107,8 +105,8 @@ namespace G24_STM32HAL::GPIOLib{
 
 	class IDMapBuilder{
 	public:
-		std::unordered_map<int, DataManager> managers_map;
-		IDMapBuilder& add(int id,const DataManager& c){
+		std::unordered_map<size_t, DataManager> managers_map;
+		IDMapBuilder& add(size_t id,const DataManager& c){
 			managers_map.insert(std::pair(id, c));
 			return *this;
 		}

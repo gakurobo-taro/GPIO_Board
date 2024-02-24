@@ -14,6 +14,12 @@ namespace G24_STM32HAL::GPIOBoard{
 		LED_B.start();
 
 		can.start();
+		can.set_filter_free(0);
+
+		for(auto &io:GPIOBoard::IO){
+			io.set_period(0);
+			io.set_duty(0xFFFF);
+		}
 	}
 	uint8_t read_board_id(void){
 		uint8_t id = 0;
@@ -26,25 +32,47 @@ namespace G24_STM32HAL::GPIOBoard{
 	void main_data_process(void){
 		int id = read_board_id();
 
-		CommonLib::DataPacket rx_data;
 		if(can.rx_available()){
+			CommonLib::DataPacket rx_data;
 			CommonLib::CanFrame rx_frame;
 			can.rx(rx_frame);
 			CommonLib::DataConvert::decode_can_frame(rx_frame, rx_data);
 
-			if(rx_data.board_ID == id){
+			if(rx_data.board_ID == id && rx_data.data_type == CommonLib::DataType::GPIOC_DATA){
 				if(rx_data.is_request){
 					CommonLib::CanFrame tx_frame;
 					auto writer = tx_frame.writer();
 
 					if(id_map.get(rx_data.register_ID, writer)){
 						tx_frame.id = rx_frame.id;
+						tx_frame.is_ext_id = true;
 						tx_frame.is_remote = false;
+
 						can.tx(tx_frame);
 					}
 				}else{
 					auto reader = rx_data.reader();
 					id_map.set(rx_data.register_ID, reader);
+				}
+			}
+		}
+	}
+
+	void monitor_task(void){
+		for(auto &map_element : id_map.managers_map){
+			if(map_element.first < monitor.size()){
+				if(monitor.test(map_element.first)){
+					CommonLib::DataPacket tx_packet;
+					CommonLib::CanFrame tx_frame;
+					tx_packet.register_ID = map_element.first;
+					tx_packet.board_ID = read_board_id();
+					tx_packet.data_type = CommonLib::DataType::GPIOC_DATA;
+
+					auto writer = tx_packet.writer();
+					if(map_element.second.get(writer)){
+						CommonLib::DataConvert::encode_can_frame(tx_packet, tx_frame);
+						can.tx(tx_frame);
+					}
 				}
 			}
 		}

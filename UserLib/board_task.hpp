@@ -55,20 +55,45 @@ namespace G24_STM32HAL::GPIOBoard{
 	};
 
 	//LEDs
-	inline auto LED_R = CommonLib::PWMHard{&htim1,TIM_CHANNEL_1};
+	inline auto LED_R = CommonLib::PWMHard{&htim1,TIM_CHANNEL_3};
 	inline auto LED_G = CommonLib::PWMHard{&htim1,TIM_CHANNEL_2};
-	inline auto LED_B = CommonLib::PWMHard{&htim1,TIM_CHANNEL_3};
+	inline auto LED_B = CommonLib::PWMHard{&htim1,TIM_CHANNEL_1};
 
 	//can
 	inline auto can = CommonLib::CanComm<4,4>(&hcan,CAN_RX_FIFO0,CAN_FILTER_FIFO0,CAN_IT_RX_FIFO0_MSG_PENDING);
 
+	//
+	inline auto monitor = std::bitset<0x29>{};
+
 	auto port_write = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); };
 	auto port_read = []()->uint16_t{
-		uint16_t data = 0;
-		for(size_t i = 0; i < IO.size(); i++) data |= IO[i].get_input_state() ? (1u << i) : 0;
+		uint16_t data = GPIOA->IDR;//IO[0].get_input_state();
+		//for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
 	};
 	auto set_port_mode = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_input_mode(data & (1u<<i)); };
+	auto set_monitor_period = [](uint16_t val){
+		if(val == 0){
+			HAL_TIM_Base_Stop_IT(monitor_timer);
+		}else{
+			__HAL_TIM_SET_AUTORELOAD(monitor_timer,val);
+			__HAL_TIM_SET_COUNTER(monitor_timer,0);
+
+			if(HAL_TIM_Base_GetState(monitor_timer) == HAL_TIM_STATE_READY){
+				HAL_TIM_Base_Start_IT(monitor_timer);
+			}
+		}
+	};
+	auto get_monitor_period = []()->uint16_t{
+		if(HAL_TIM_Base_GetState(monitor_timer) == HAL_TIM_STATE_BUSY){
+			return __HAL_TIM_GET_AUTORELOAD(monitor_timer);
+		}else{
+			return 0;
+		}
+	};
+	auto set_monitor_register = [](uint64_t val){ monitor = std::bitset<0x29>{val}; };
+	auto get_monitor_register = []()->uint64_t{ return monitor.to_ullong(); };
+
 
 	inline auto id_map = GPIOLib::IDMapBuilder()
 		.add(0x01, GPIOLib::DataManager::generate<uint16_t>(set_port_mode))
@@ -92,11 +117,15 @@ namespace G24_STM32HAL::GPIOBoard{
 		.add(0x26, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[6].set_duty(data);},[]()->uint16_t { return IO[6].get_duty();}))
 		.add(0x27, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[7].set_duty(data);},[]()->uint16_t { return IO[7].get_duty();}))
 		.add(0x28, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[8].set_duty(data);},[]()->uint16_t { return IO[8].get_duty();}))
+		.add(0xF0, GPIOLib::DataManager::generate<uint16_t>(set_monitor_period, get_monitor_period))
+		.add(0xF1, GPIOLib::DataManager::generate<uint64_t>(set_monitor_register, get_monitor_period))
 		.build();
 
 	void init(void);
 
 	void main_data_process(void);
+
+	void monitor_task(void);
 }
 
 
