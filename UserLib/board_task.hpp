@@ -67,8 +67,8 @@ namespace G24_STM32HAL::GPIOBoard{
 
 	auto port_write = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); };
 	auto port_read = []()->uint16_t{
-		uint16_t data = GPIOA->IDR;//IO[0].get_input_state();
-		//for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
+		uint16_t data = 0;
+		for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
 	};
 	auto set_port_mode = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_input_mode(data & (1u<<i)); };
@@ -93,7 +93,6 @@ namespace G24_STM32HAL::GPIOBoard{
 	};
 	auto set_monitor_register = [](uint64_t val){ monitor = std::bitset<0x29>{val}; };
 	auto get_monitor_register = []()->uint64_t{ return monitor.to_ullong(); };
-
 
 	inline auto id_map = GPIOLib::IDMapBuilder()
 		.add(0x01, GPIOLib::DataManager::generate<uint16_t>(set_port_mode))
@@ -122,6 +121,8 @@ namespace G24_STM32HAL::GPIOBoard{
 		.build();
 
 	void init(void);
+
+	uint8_t read_board_id(void);
 
 	void main_data_process(void);
 

@@ -91,6 +91,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     	GPIOBoard::monitor_task();
     }
 }
+extern "C" {
+int _write(int file, char *ptr, int len)
+	{
+		HAL_UART_Transmit(&huart2,(uint8_t *)ptr,len,100);
+		return len;
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -101,7 +108,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	setbuf(stdout, NULL);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -132,9 +139,24 @@ int main(void)
   GPIOBoard::init();
 
   HAL_TIM_Base_Start_IT(GPIOBoard::pwm_timer);
-  HAL_TIM_Base_Start_IT(GPIOBoard::monitor_timer);
+  //HAL_TIM_Base_Start_IT(GPIOBoard::monitor_timer);
 
   //GPIOBoard::set_monitor_period(1000);
+
+//  LL_GPIO_SetPinPull(IO1_GPIO_Port,IO1_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO2_GPIO_Port,IO2_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO3_GPIO_Port,IO3_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO4_GPIO_Port,IO4_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO5_GPIO_Port,IO5_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO6_GPIO_Port,IO6_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO7_GPIO_Port,IO7_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO8_GPIO_Port,IO8_Pin, LL_GPIO_PULL_UP);
+//  LL_GPIO_SetPinPull(IO9_GPIO_Port,IO9_Pin, LL_GPIO_PULL_UP);
+//
+//  GPIOBoard::set_port_mode(0);
+//  HAL_Delay(100);
+//  GPIOBoard::set_port_mode(0xFFFF);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -144,10 +166,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  GPIOBoard::LED_R.out_as_gpio_toggle();
+	  printf("ID:%d,port:%x\r\n",GPIOBoard::read_board_id(),GPIOBoard::port_read());
+
+
 	  GPIOBoard::main_data_process();
-	  GPIOBoard::LED_R.out_as_gpio(false);
+	  //GPIOBoard::LED_R.out_as_gpio(false);
 	  GPIOBoard::LED_G.out_as_gpio(false);
 	  GPIOBoard::LED_B.out_as_gpio(false);
+	  HAL_Delay(100);
+
   }
   /* USER CODE END 3 */
 }

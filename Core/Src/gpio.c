@@ -52,17 +52,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = IO9_Pin|IO8_Pin|IO7_Pin|IO6_Pin
                           |IO5_Pin|IO4_Pin|IO3_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = IO2_Pin|IO1_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = ID0_Pin|ID2_Pin|ID1_Pin|ID3_Pin;
+  GPIO_InitStruct.Pin = IO2_Pin|IO1_Pin|ID0_Pin|ID2_Pin
+                          |ID1_Pin|ID3_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
