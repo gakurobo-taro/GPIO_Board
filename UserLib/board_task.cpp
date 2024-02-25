@@ -77,7 +77,8 @@ namespace G24_STM32HAL::GPIOBoard{
 			}
 		}
 	}
-	int count = 0;
+
+	static int count = 0;
 	void pin_interrupt_check(void){
 		uint16_t tmp = GPIOBoard::port_read();
 		if((port_read()&pin_interrupt_mask) != (port_read_old_val&pin_interrupt_mask)){
