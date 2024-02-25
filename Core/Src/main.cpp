@@ -143,13 +143,6 @@ int main(void)
   HAL_TIM_Base_Start_IT(GPIOBoard::pwm_timer);
   //HAL_TIM_Base_Start_IT(GPIOBoard::monitor_timer);
 
-  //GPIOBoard::set_monitor_period(1000);
-
-  GPIOBoard::pin_interrupt_mask = 0x1;
-//  GPIOBoard::set_port_mode(0);
-//  HAL_Delay(100);
-//  GPIOBoard::set_port_mode(0xFFFF);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
