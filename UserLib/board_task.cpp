@@ -77,4 +77,23 @@ namespace G24_STM32HAL::GPIOBoard{
 			}
 		}
 	}
+	void pin_interrupt_check(void){
+		uint16_t tmp = GPIOBoard::port_read();
+		if((port_read()&pin_interrupt_mask) != (port_read_old_val&pin_interrupt_mask)){
+			CommonLib::DataPacket tx_packet;
+			CommonLib::CanFrame tx_frame;
+
+			tx_packet.data_type = CommonLib::DataType::GPIOC_DATA;
+			tx_packet.register_ID = 0x02;
+			tx_packet.board_ID = read_board_id();
+			auto writer = tx_packet.writer();
+
+			writer.write<uint16_t>(tmp);
+
+			CommonLib::DataConvert::encode_can_frame(tx_packet, tx_frame);
+
+			can.tx(tx_frame);
+		}
+		port_read_old_val = tmp;
+	}
 }

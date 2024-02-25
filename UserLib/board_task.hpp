@@ -62,8 +62,12 @@ namespace G24_STM32HAL::GPIOBoard{
 	//can
 	inline auto can = CommonLib::CanComm<4,4>(&hcan,CAN_RX_FIFO0,CAN_FILTER_FIFO0,CAN_IT_RX_FIFO0_MSG_PENDING);
 
-	//
+	//monitor
 	inline auto monitor = std::bitset<0x29>{};
+
+	//pin interrupt
+	inline uint16_t pin_interrupt_mask = 0;
+	inline uint16_t port_read_old_val = 0;
 
 	auto port_write = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); };
 	auto port_read = []()->uint16_t{
@@ -98,6 +102,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		.add(0x01, GPIOLib::DataManager::generate<uint16_t>(set_port_mode))
 		.add(0x02, GPIOLib::DataManager::generate<uint16_t>(port_read))
 		.add(0x03, GPIOLib::DataManager::generate<uint16_t>(port_write))
+		.add(0x04, GPIOLib::DataManager::generate<uint16_t>(pin_interrupt_mask))
 		.add(0x10, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[0].set_period(data);},[]()->uint16_t { return IO[0].get_period();}))
 		.add(0x11, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[1].set_period(data);},[]()->uint16_t { return IO[1].get_period();}))
 		.add(0x12, GPIOLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[2].set_period(data);},[]()->uint16_t { return IO[2].get_period();}))
@@ -127,6 +132,8 @@ namespace G24_STM32HAL::GPIOBoard{
 	void main_data_process(void);
 
 	void monitor_task(void);
+
+	void pin_interrupt_check(void);
 }
 
 
