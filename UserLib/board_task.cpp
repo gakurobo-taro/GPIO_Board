@@ -59,7 +59,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	}
 
 	void monitor_task(void){
-		for(auto &map_element : id_map.managers_map){
+		for(auto &map_element : id_map.accessors_map){
 			if(map_element.first < monitor.size()){
 				if(monitor.test(map_element.first)){
 					CommonLib::DataPacket tx_packet;

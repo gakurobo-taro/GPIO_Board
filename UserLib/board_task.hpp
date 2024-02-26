@@ -70,13 +70,11 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline uint16_t pin_interrupt_mask = 0;
 	inline uint16_t port_read_old_val = 0;
 
-	auto port_write = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); };
 	auto port_read = []()->uint16_t{
 		uint16_t data = 0;
 		for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
 	};
-	auto set_port_mode = [](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_input_mode(data & (1u<<i)); };
 	auto set_monitor_period = [](uint16_t val){
 		if(val == 0){
 			HAL_TIM_Base_Stop_IT(monitor_timer);
@@ -96,34 +94,32 @@ namespace G24_STM32HAL::GPIOBoard{
 			return 0;
 		}
 	};
-	auto set_monitor_register = [](uint64_t val){ monitor = std::bitset<0x29>{val}; };
-	auto get_monitor_register = []()->uint64_t{ return monitor.to_ullong(); };
 
 	inline auto id_map = CommonLib::IDMapBuilder()
-		.add((uint16_t)GPIOLib::GPIOReg::PORT_MODE,     CommonLib::DataManager::generate<uint16_t>(set_port_mode))
-		.add((uint16_t)GPIOLib::GPIOReg::PORT_READ,     CommonLib::DataManager::generate<uint16_t>(port_read))
-		.add((uint16_t)GPIOLib::GPIOReg::PORT_WRITE,    CommonLib::DataManager::generate<uint16_t>(port_write))
-		.add((uint16_t)GPIOLib::GPIOReg::PORT_INT_EN,   CommonLib::DataManager::generate<uint16_t>(pin_interrupt_mask))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM1_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[0].set_period(data);},[]()->uint16_t { return IO[0].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM2_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[1].set_period(data);},[]()->uint16_t { return IO[1].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM3_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[2].set_period(data);},[]()->uint16_t { return IO[2].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM4_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[3].set_period(data);},[]()->uint16_t { return IO[3].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM5_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[4].set_period(data);},[]()->uint16_t { return IO[4].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM6_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[5].set_period(data);},[]()->uint16_t { return IO[5].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM7_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[6].set_period(data);},[]()->uint16_t { return IO[6].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM8_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[7].set_period(data);},[]()->uint16_t { return IO[7].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM9_PERIOD,   CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[8].set_period(data);},[]()->uint16_t { return IO[8].get_period();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM1_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[0].set_duty(data);},[]()->uint16_t { return IO[0].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM2_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[1].set_duty(data);},[]()->uint16_t { return IO[1].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM3_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[2].set_duty(data);},[]()->uint16_t { return IO[2].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM4_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[3].set_duty(data);},[]()->uint16_t { return IO[3].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM5_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[4].set_duty(data);},[]()->uint16_t { return IO[4].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM6_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[5].set_duty(data);},[]()->uint16_t { return IO[5].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM7_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[6].set_duty(data);},[]()->uint16_t { return IO[6].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM8_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[7].set_duty(data);},[]()->uint16_t { return IO[7].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::PWM9_DUTY,     CommonLib::DataManager::generate<uint16_t>([](uint16_t data){ IO[8].set_duty(data);},[]()->uint16_t { return IO[8].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_PERIOD,CommonLib::DataManager::generate<uint16_t>(set_monitor_period, get_monitor_period))
-		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_REG,   CommonLib::DataManager::generate<uint64_t>(set_monitor_register, get_monitor_period))
+		.add((uint16_t)GPIOLib::GPIOReg::PORT_MODE,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_input_mode(data & (1u<<i)); }))
+		.add((uint16_t)GPIOLib::GPIOReg::PORT_READ,     CommonLib::DataAccessor::generate<uint16_t>(port_read))
+		.add((uint16_t)GPIOLib::GPIOReg::PORT_WRITE,    CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); }))
+		.add((uint16_t)GPIOLib::GPIOReg::PORT_INT_EN,   CommonLib::DataAccessor::generate<uint16_t>(pin_interrupt_mask))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM1_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[0].set_period(data);},[]()->uint16_t { return IO[0].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM2_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[1].set_period(data);},[]()->uint16_t { return IO[1].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM3_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[2].set_period(data);},[]()->uint16_t { return IO[2].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM4_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[3].set_period(data);},[]()->uint16_t { return IO[3].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM5_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[4].set_period(data);},[]()->uint16_t { return IO[4].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM6_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[5].set_period(data);},[]()->uint16_t { return IO[5].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM7_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[6].set_period(data);},[]()->uint16_t { return IO[6].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM8_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[7].set_period(data);},[]()->uint16_t { return IO[7].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM9_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[8].set_period(data);},[]()->uint16_t { return IO[8].get_period();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM1_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[0].set_duty(data);},[]()->uint16_t { return IO[0].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM2_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[1].set_duty(data);},[]()->uint16_t { return IO[1].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM3_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[2].set_duty(data);},[]()->uint16_t { return IO[2].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM4_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[3].set_duty(data);},[]()->uint16_t { return IO[3].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM5_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[4].set_duty(data);},[]()->uint16_t { return IO[4].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM6_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[5].set_duty(data);},[]()->uint16_t { return IO[5].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM7_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[6].set_duty(data);},[]()->uint16_t { return IO[6].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM8_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[7].set_duty(data);},[]()->uint16_t { return IO[7].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::PWM9_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[8].set_duty(data);},[]()->uint16_t { return IO[8].get_duty();}))
+		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_PERIOD,CommonLib::DataAccessor::generate<uint16_t>(set_monitor_period, get_monitor_period))
+		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_REG,   CommonLib::DataAccessor::generate<uint64_t>([](uint64_t val){ monitor = std::bitset<0x29>{val};}, []()->uint64_t{ return monitor.to_ullong();}))
 		.build();
 
 	void init(void);
