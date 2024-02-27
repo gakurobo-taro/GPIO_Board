@@ -70,12 +70,12 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline uint16_t pin_interrupt_mask = 0;
 	inline uint16_t port_read_old_val = 0;
 
-	auto port_read = []()->uint16_t{
+	inline auto port_read = []()->uint16_t{
 		uint16_t data = 0;
 		for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
 	};
-	auto set_monitor_period = [](uint16_t val){
+	inline auto set_monitor_period = [](uint16_t val){
 		if(val == 0){
 			HAL_TIM_Base_Stop_IT(monitor_timer);
 		}else{
@@ -87,7 +87,7 @@ namespace G24_STM32HAL::GPIOBoard{
 			}
 		}
 	};
-	auto get_monitor_period = []()->uint16_t{
+	inline auto get_monitor_period = []()->uint16_t{
 		if(HAL_TIM_Base_GetState(monitor_timer) == HAL_TIM_STATE_BUSY){
 			return __HAL_TIM_GET_AUTORELOAD(monitor_timer);
 		}else{
