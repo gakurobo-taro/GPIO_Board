@@ -103,6 +103,7 @@ void SystemClock_Config(void);
 #define ID1_GPIO_Port GPIOB
 #define ID3_Pin LL_GPIO_PIN_7
 #define ID3_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -112,5 +113,3 @@ void SystemClock_Config(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
