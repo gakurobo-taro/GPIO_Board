@@ -11,6 +11,12 @@
 #include <stdint.h>
 
 namespace G24_STM32HAL::GPIOLib{
+	enum class CommonReg:uint16_t{
+		NOP,
+		ID_REQEST,
+		EMERGENCY_STOP = 0xE,
+		RESET_EMERGENCY_STOP = 0xF,
+	};
 	enum class GPIOReg : uint16_t{
 		NOP,
 		PORT_MODE,

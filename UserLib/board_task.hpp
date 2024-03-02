@@ -128,6 +128,11 @@ namespace G24_STM32HAL::GPIOBoard{
 
 	void main_data_process(void);
 
+	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data);
+	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data);
+
+	void emergency_stop_sequence(void);
+
 	void monitor_task(void);
 
 	void pin_interrupt_check(void);

@@ -156,8 +156,6 @@ int main(void)
 	  GPIOBoard::LED_R.out_as_gpio(false);
 	  GPIOBoard::LED_G.out_as_gpio(false);
 	  GPIOBoard::LED_B.out_as_gpio(false);
-	  HAL_Delay(100);
-
   }
   /* USER CODE END 3 */
 }

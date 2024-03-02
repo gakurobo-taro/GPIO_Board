@@ -30,7 +30,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	}
 
 	void main_data_process(void){
-		int id = read_board_id();
+		int board_id = read_board_id();
 
 		if(can.rx_available()){
 			CommonLib::DataPacket rx_data;
@@ -38,23 +38,68 @@ namespace G24_STM32HAL::GPIOBoard{
 			can.rx(rx_frame);
 			CommonLib::DataConvert::decode_can_frame(rx_frame, rx_data);
 
-			if(rx_data.board_ID == id && rx_data.data_type == CommonLib::DataType::GPIOC_DATA){
-				if(rx_data.is_request){
-					CommonLib::CanFrame tx_frame;
-					auto writer = tx_frame.writer();
-
-					if(id_map.get(rx_data.register_ID, writer)){
-						tx_frame.id = rx_frame.id;
-						tx_frame.is_ext_id = true;
-						tx_frame.is_remote = false;
-
-						can.tx(tx_frame);
-					}
-				}else{
-					auto reader = rx_data.reader();
-					id_map.set(rx_data.register_ID, reader);
-				}
+			if(rx_data.board_ID == board_id && rx_data.data_type == CommonLib::DataType::GPIOC_DATA){
+				execute_gpio_command(board_id,rx_data);
+			}else if((board_id == rx_data.board_ID && rx_data.data_type == CommonLib::DataType::COMMON_DATA)
+					||(rx_data.data_type == CommonLib::DataType::COMMON_DATA_ENFORCE)){
+				execute_common_command(board_id,rx_data);
 			}
+		}
+	}
+
+	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data){
+		if(rx_data.is_request){
+			CommonLib::CanFrame tx_frame;
+			CommonLib::DataPacket tx_data;
+			auto writer = tx_frame.writer();
+
+			if(id_map.get(rx_data.register_ID, writer)){
+				tx_data.board_ID = board_id;
+				tx_data.data_type = CommonLib::DataType::GPIOC_DATA;
+				tx_data.priority = rx_data.priority;
+				tx_data.register_ID = rx_data.register_ID;
+
+				CommonLib::DataConvert::encode_can_frame(tx_data, tx_frame);
+
+				can.tx(tx_frame);
+			}
+		}else{
+			auto reader = rx_data.reader();
+			id_map.set(rx_data.register_ID, reader);
+		}
+	}
+	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data){
+		CommonLib::DataPacket tx_data;
+		CommonLib::CanFrame tx_frame;
+
+		switch((GPIOLib::CommonReg)rx_data.register_ID){
+		case GPIOLib::CommonReg::NOP:
+			break;
+		case GPIOLib::CommonReg::ID_REQEST:
+			if(rx_data.is_request){
+				tx_data.board_ID = board_id;
+				tx_data.data_type = CommonLib::DataType::COMMON_DATA;
+				tx_data.register_ID = (uint16_t)GPIOLib::CommonReg::ID_REQEST;
+				tx_data.writer().write<uint8_t>((uint8_t)CommonLib::DataType::GPIOC_DATA);
+				tx_data.priority = rx_data.priority;
+
+				CommonLib::DataConvert::encode_can_frame(tx_data,tx_frame);
+				can.tx(tx_frame);
+			}
+			break;
+		case GPIOLib::CommonReg::EMERGENCY_STOP:
+			emergency_stop_sequence();
+			break;
+		case GPIOLib::CommonReg::RESET_EMERGENCY_STOP:
+			//nop
+			break;
+		default:
+			break;
+		}
+	}
+	void emergency_stop_sequence(void){
+		for(auto &io: IO){
+			io.set_output_state(false);
 		}
 	}
 
