@@ -13,8 +13,11 @@ namespace G24_STM32HAL::GPIOBoard{
 		LED_G.start();
 		LED_B.start();
 
+		int id = read_board_id();
+		can.set_filter_mask(0, 0x00300000|(id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
+		can.set_filter_mask(1, 0x00000000|(id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
+		can.set_filter_mask(2, 0x00F00000, 0x00F00000, CommonLib::FilterMode::STD_AND_EXT, true);
 		can.start();
-		can.set_filter_free(0);
 
 		for(auto &io:GPIOBoard::IO){
 			io.set_period(0);
@@ -51,7 +54,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		if(rx_data.is_request){
 			CommonLib::CanFrame tx_frame;
 			CommonLib::DataPacket tx_data;
-			auto writer = tx_frame.writer();
+			auto writer = tx_data.writer();
 
 			if(id_map.get(rx_data.register_ID, writer)){
 				tx_data.board_ID = board_id;

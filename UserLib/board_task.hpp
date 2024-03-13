@@ -70,7 +70,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline uint16_t pin_interrupt_mask = 0;
 	inline uint16_t port_read_old_val = 0;
 
-	inline auto port_read = []()->uint16_t{
+	inline uint16_t port_read(void){
 		uint16_t data = 0;
 		for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
@@ -99,7 +99,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		.add((uint16_t)GPIOLib::GPIOReg::PORT_MODE,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_input_mode(data & (1u<<i)); }))
 		.add((uint16_t)GPIOLib::GPIOReg::PORT_READ,     CommonLib::DataAccessor::generate<uint16_t>(port_read))
 		.add((uint16_t)GPIOLib::GPIOReg::PORT_WRITE,    CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ for(size_t i = 0; i < IO.size(); i++) IO[i].set_output_state(data & (1u<<i)); }))
-		.add((uint16_t)GPIOLib::GPIOReg::PORT_INT_EN,   CommonLib::DataAccessor::generate<uint16_t>(pin_interrupt_mask))
+		.add((uint16_t)GPIOLib::GPIOReg::PORT_INT_EN,   CommonLib::DataAccessor::generate<uint16_t>(&pin_interrupt_mask))
 		.add((uint16_t)GPIOLib::GPIOReg::PWM1_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[0].set_period(data);},[]()->uint16_t { return IO[0].get_period();}))
 		.add((uint16_t)GPIOLib::GPIOReg::PWM2_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[1].set_period(data);},[]()->uint16_t { return IO[1].get_period();}))
 		.add((uint16_t)GPIOLib::GPIOReg::PWM3_PERIOD,   CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[2].set_period(data);},[]()->uint16_t { return IO[2].get_period();}))
