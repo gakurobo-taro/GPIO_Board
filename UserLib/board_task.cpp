@@ -13,9 +13,9 @@ namespace G24_STM32HAL::GPIOBoard{
 		LED_G.start();
 		LED_B.start();
 
-		int id = read_board_id();
-		can.set_filter_mask(0, 0x00300000|(id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
-		can.set_filter_mask(1, 0x00000000|(id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
+		board_id = read_board_id();
+		can.set_filter_mask(0, 0x00300000|(board_id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
+		can.set_filter_mask(1, 0x00000000|(board_id<<16), 0x00FF0000, CommonLib::FilterMode::STD_AND_EXT, true);
 		can.set_filter_mask(2, 0x00F00000, 0x00F00000, CommonLib::FilterMode::STD_AND_EXT, true);
 		can.start();
 
@@ -23,6 +23,18 @@ namespace G24_STM32HAL::GPIOBoard{
 			io.set_period(0);
 			io.set_duty(0xFFFF);
 		}
+		monitor_timer.set_task(monitor_task);
+		pwm_timer.set_task([](){
+			for(auto &io:GPIOBoard::IO){io.update();}
+			GPIOBoard::pin_interrupt_check();
+		});
+		led_timer.set_task([](){
+			LED_R.update();
+			LED_G.update();
+			LED_B.update();
+		});
+		pwm_timer.set_and_start(20-1);
+		led_timer.set_and_start(1000-1);
 	}
 	uint8_t read_board_id(void){
 		uint8_t id = 0;
@@ -33,8 +45,6 @@ namespace G24_STM32HAL::GPIOBoard{
 	}
 
 	void main_data_process(void){
-		int board_id = read_board_id();
-
 		if(can.rx_available()){
 			CommonLib::DataPacket rx_data;
 			CommonLib::CanFrame rx_frame;
@@ -101,6 +111,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		}
 	}
 	void emergency_stop_sequence(void){
+		GPIOBoard::LED_R.play(GPIOLib::error);
 		for(auto &io: IO){
 			io.set_output_state(false);
 		}
@@ -113,7 +124,7 @@ namespace G24_STM32HAL::GPIOBoard{
 					CommonLib::DataPacket tx_packet;
 					CommonLib::CanFrame tx_frame;
 					tx_packet.register_ID = map_element.first;
-					tx_packet.board_ID = read_board_id();
+					tx_packet.board_ID = board_id;
 					tx_packet.data_type = CommonLib::DataType::GPIOC_DATA;
 
 					auto writer = tx_packet.writer();

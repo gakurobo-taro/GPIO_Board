@@ -9,6 +9,7 @@
 #define BOARD_TASK_HPP_
 
 #include "board_id.hpp"
+#include "LED_pattern.hpp"
 
 #include "STM32HAL_CommonLib/can_comm.hpp"
 #include "STM32HAL_CommonLib/pwm.hpp"
@@ -16,6 +17,7 @@
 #include "STM32HAL_CommonLib/data_convert.hpp"
 #include "STM32HAL_CommonLib/serial_comm.hpp"
 #include "STM32HAL_CommonLib/id_map_control.hpp"
+#include "STM32HAL_CommonLib/timer_control.hpp"
 
 #include "main.h"
 #include "can.h"
@@ -27,8 +29,11 @@
 #include <bitset>
 
 namespace G24_STM32HAL::GPIOBoard{
-	inline auto *pwm_timer = &htim16;
-	inline auto *monitor_timer = &htim17;
+
+	inline uint8_t board_id = 0;
+	inline auto led_timer = CommonLib::InterruptionTimerHard(&htim15);
+	inline auto pwm_timer = CommonLib::InterruptionTimerHard(&htim16);
+	inline auto monitor_timer = CommonLib::InterruptionTimerHard(&htim17);
 
 	struct GPIOParam{
 		GPIO_TypeDef * port;
@@ -56,12 +61,17 @@ namespace G24_STM32HAL::GPIOBoard{
 	};
 
 	//LEDs
-	inline auto LED_R = CommonLib::PWMHard{&htim1,TIM_CHANNEL_3};
-	inline auto LED_G = CommonLib::PWMHard{&htim1,TIM_CHANNEL_2};
-	inline auto LED_B = CommonLib::PWMHard{&htim1,TIM_CHANNEL_1};
+	inline auto LED_R = CommonLib::LEDPwm{&htim1,TIM_CHANNEL_3};
+	inline auto LED_G = CommonLib::LEDPwm{&htim1,TIM_CHANNEL_2};
+	inline auto LED_B = CommonLib::LEDPwm{&htim1,TIM_CHANNEL_1};
 
 	//can
-	inline auto can = CommonLib::CanComm<4,4>(&hcan,CAN_RX_FIFO0,CAN_FILTER_FIFO0,CAN_IT_RX_FIFO0_MSG_PENDING);
+	inline auto can = CommonLib::CanComm(&hcan,
+			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
+			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
+			CAN_RX_FIFO0,
+			CAN_FILTER_FIFO0,
+			CAN_IT_RX_FIFO0_MSG_PENDING);
 
 	//monitor
 	inline auto monitor = std::bitset<0x29>{};
@@ -74,25 +84,6 @@ namespace G24_STM32HAL::GPIOBoard{
 		uint16_t data = 0;
 		for(size_t i = 0; i < IO.size(); i++){ data = (IO[i].get_input_state() ? (1<<i) : 0) | data; }
 		return data;
-	};
-	inline auto set_monitor_period = [](uint16_t val){
-		if(val == 0){
-			HAL_TIM_Base_Stop_IT(monitor_timer);
-		}else{
-			__HAL_TIM_SET_AUTORELOAD(monitor_timer,val);
-			__HAL_TIM_SET_COUNTER(monitor_timer,0);
-
-			if(HAL_TIM_Base_GetState(monitor_timer) == HAL_TIM_STATE_READY){
-				HAL_TIM_Base_Start_IT(monitor_timer);
-			}
-		}
-	};
-	inline auto get_monitor_period = []()->uint16_t{
-		if(HAL_TIM_Base_GetState(monitor_timer) == HAL_TIM_STATE_BUSY){
-			return __HAL_TIM_GET_AUTORELOAD(monitor_timer);
-		}else{
-			return 0;
-		}
 	};
 
 	inline auto id_map = CommonLib::IDMapBuilder()
@@ -118,7 +109,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		.add((uint16_t)GPIOLib::GPIOReg::PWM7_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[6].set_duty(data);},[]()->uint16_t { return IO[6].get_duty();}))
 		.add((uint16_t)GPIOLib::GPIOReg::PWM8_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[7].set_duty(data);},[]()->uint16_t { return IO[7].get_duty();}))
 		.add((uint16_t)GPIOLib::GPIOReg::PWM9_DUTY,     CommonLib::DataAccessor::generate<uint16_t>([](uint16_t data){ IO[8].set_duty(data);},[]()->uint16_t { return IO[8].get_duty();}))
-		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_PERIOD,CommonLib::DataAccessor::generate<uint16_t>(set_monitor_period, get_monitor_period))
+		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_PERIOD,CommonLib::DataAccessor::generate<uint16_t>([](uint16_t period){monitor_timer.set_and_start(period);}, []()->uint16_t{return monitor_timer.get_state();}))
 		.add((uint16_t)GPIOLib::GPIOReg::MONITOR_REG,   CommonLib::DataAccessor::generate<uint64_t>([](uint64_t val){ monitor = std::bitset<0x29>{val};}, []()->uint64_t{ return monitor.to_ullong();}))
 		.build();
 
