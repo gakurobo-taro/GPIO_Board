@@ -87,9 +87,9 @@ namespace G24_STM32HAL::GPIOBoard{
 		return data;
 	};
 
-	inline auto esc_mode = std::bitset<9>{};
+	inline auto esc_mode = std::bitset<IO.size()>{};
 	inline void set_esc_mode(uint16_t val){
-		esc_mode = std::bitset<9>{val};
+		esc_mode = std::bitset<IO.size()>{val};
 		for(size_t i = 0; i < esc_mode.size(); i++){
 			if(esc_mode.test(i)){
 				IO[i].pwm.set_input_mode(false);

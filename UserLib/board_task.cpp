@@ -32,6 +32,9 @@ namespace G24_STM32HAL::GPIOBoard{
 			LED_R.update();
 			LED_G.update();
 			LED_B.update();
+			for(auto &i:IO){
+				i.update();
+			}
 		});
 		pwm_timer.set_and_start(20-1);
 		led_timer.set_and_start(1000-1);
