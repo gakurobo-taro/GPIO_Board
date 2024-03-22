@@ -20,7 +20,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		can.start();
 
 		for(auto &io:GPIOBoard::IO){
-			io.set_period(0);
+			io.pwm.set_period(0);
 			io.set_duty(0xFFFF);
 		}
 		monitor_timer.set_task(monitor_task);
@@ -104,7 +104,7 @@ namespace G24_STM32HAL::GPIOBoard{
 			emergency_stop_sequence();
 			break;
 		case GPIOLib::CommonReg::RESET_EMERGENCY_STOP:
-			//nop
+			emergency_stop_release_sequence();
 			break;
 		default:
 			break;
@@ -113,7 +113,17 @@ namespace G24_STM32HAL::GPIOBoard{
 	void emergency_stop_sequence(void){
 		GPIOBoard::LED_R.play(GPIOLib::error);
 		for(auto &io: IO){
-			io.set_output_state(false);
+			io.pwm.set_output_state(false);
+		}
+	}
+	void emergency_stop_release_sequence(void){
+		for(size_t i = 0; i < esc_mode.size(); i++){
+			if(esc_mode.test(i)){
+				IO[i].pwm.set_input_mode(false);
+				IO[i].pwm.set_period(1000);
+				IO[i].pwm.set_output_state(true);
+				IO[i].start_sequcence(GPIOLib::PWMSequence::servo_init);
+			}
 		}
 	}
 
