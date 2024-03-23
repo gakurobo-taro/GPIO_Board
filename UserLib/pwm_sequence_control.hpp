@@ -62,7 +62,8 @@ namespace G24_STM32HAL::GPIOLib{
 	};
 
 	namespace PWMSequence{
-		inline const PWMPattern servo_init[]{
+		inline const PWMPattern esc_init[]{
+				{0,500},
 				{100,2000},
 				{50,2000},
 				{0,0},

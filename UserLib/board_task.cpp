@@ -139,7 +139,7 @@ namespace G24_STM32HAL::GPIOBoard{
 				IO[i].pwm.set_input_mode(false);
 				IO[i].pwm.set_period(1000);
 				IO[i].pwm.set_output_state(true);
-				IO[i].start_sequcence(GPIOLib::PWMSequence::servo_init);
+				IO[i].start_sequcence(GPIOLib::PWMSequence::esc_init);
 			}
 		}
 	}
@@ -167,7 +167,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	static int count = 0;
 	void pin_interrupt_check(void){
 		uint16_t tmp = GPIOBoard::port_read();
-		if((port_read()&pin_interrupt_mask) != (port_read_old_val&pin_interrupt_mask)){
+		if((tmp&pin_interrupt_mask) != (port_read_old_val&pin_interrupt_mask)){
 			if(count > 10){
 				count = 0;
 				CommonLib::DataPacket tx_packet;
