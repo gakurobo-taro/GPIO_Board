@@ -36,18 +36,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline auto pwm_timer = CommonLib::InterruptionTimerHard(&htim16);
 	inline auto monitor_timer = CommonLib::InterruptionTimerHard(&htim17);
 
-	struct GPIOParam{
-		GPIO_TypeDef * port;
-		uint16_t pin;
-		GPIOParam(GPIO_TypeDef * _port,uint16_t _pin):port(_port),pin(_pin){}
-	};
 
-	inline auto dip_sw = std::array<GPIOParam,4>{
-		GPIOParam{ID0_GPIO_Port,ID0_Pin},
-		GPIOParam{ID1_GPIO_Port,ID1_Pin},
-		GPIOParam{ID2_GPIO_Port,ID2_Pin},
-		GPIOParam{ID3_GPIO_Port,ID3_Pin},
-	};
 
 	inline auto IO = std::array<GPIOLib::ProgramableSoftPWM,9>{
 			GPIOLib::ProgramableSoftPWM(CommonLib::PWMLLSoft{IO1_GPIO_Port,IO1_Pin}),

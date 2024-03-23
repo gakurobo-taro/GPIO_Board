@@ -23,23 +23,37 @@ namespace G24_STM32HAL::GPIOBoard{
 			io.pwm.set_period(0);
 			io.set_duty(0xFFFF);
 		}
+
 		monitor_timer.set_task(monitor_task);
 		pwm_timer.set_task([](){
-			for(auto &io:GPIOBoard::IO){io.update();}
+			for(auto &io:GPIOBoard::IO){io.pwm.update();}
 			GPIOBoard::pin_interrupt_check();
 		});
 		led_timer.set_task([](){
 			LED_R.update();
 			LED_G.update();
 			LED_B.update();
-			for(auto &i:IO){
-				i.update();
-			}
+			for(auto &i:IO){ i.update(); }
 		});
+
 		pwm_timer.set_and_start(20-1);
 		led_timer.set_and_start(1000-1);
 	}
+
 	uint8_t read_board_id(void){
+		struct GPIOParam{
+			GPIO_TypeDef * port;
+			uint16_t pin;
+			GPIOParam(GPIO_TypeDef * _port,uint16_t _pin):port(_port),pin(_pin){}
+		};
+
+		auto dip_sw = std::array<GPIOParam,4>{
+			GPIOParam{ID0_GPIO_Port,ID0_Pin},
+			GPIOParam{ID1_GPIO_Port,ID1_Pin},
+			GPIOParam{ID2_GPIO_Port,ID2_Pin},
+			GPIOParam{ID3_GPIO_Port,ID3_Pin},
+		};
+
 		uint8_t id = 0;
 		for(int i = 0; i<4; i++){
 			id |= !(uint8_t)HAL_GPIO_ReadPin(dip_sw.at(i).port,dip_sw.at(i).pin) << i;
@@ -161,10 +175,8 @@ namespace G24_STM32HAL::GPIOBoard{
 
 				tx_packet.data_type = CommonLib::DataType::GPIOC_DATA;
 				tx_packet.register_ID = 0x02;
-				tx_packet.board_ID = read_board_id();
-				auto writer = tx_packet.writer();
-
-				writer.write<uint16_t>(tmp);
+				tx_packet.board_ID = board_id;
+				tx_packet.writer().write<uint16_t>(tmp);
 
 				CommonLib::DataConvert::encode_can_frame(tx_packet, tx_frame);
 
