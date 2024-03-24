@@ -20,20 +20,20 @@ namespace G24_STM32HAL::GPIOBoard{
 		can.start();
 
 		for(auto &io:GPIOBoard::IO){
-			io.pwm.set_period(0);
+			io.set_period(0);
 			io.set_duty(0xFFFF);
 		}
 
 		monitor_timer.set_task(monitor_task);
 		pwm_timer.set_task([](){
-			for(auto &io:GPIOBoard::IO){io.pwm.update();}
+			for(auto &io:GPIOBoard::IO){io.update();}
 			GPIOBoard::pin_interrupt_check();
 		});
 		led_timer.set_task([](){
 			LED_R.update();
 			LED_G.update();
 			LED_B.update();
-			for(auto &i:IO){ i.update(); }
+			for(auto &io:IO){ io.sequence_update(); }
 		});
 
 		pwm_timer.set_and_start(20-1);
@@ -130,15 +130,15 @@ namespace G24_STM32HAL::GPIOBoard{
 	void emergency_stop_sequence(void){
 		GPIOBoard::LED_R.play(GPIOLib::error);
 		for(auto &io: IO){
-			io.pwm.set_output_state(false);
+			io.set_output_state(false);
 		}
 	}
 	void emergency_stop_release_sequence(void){
 		for(size_t i = 0; i < esc_mode.size(); i++){
 			if(esc_mode.test(i)){
-				IO[i].pwm.set_input_mode(false);
-				IO[i].pwm.set_period(1000);
-				IO[i].pwm.set_output_state(true);
+				IO[i].set_input_mode(false);
+				IO[i].set_period(1000);
+				IO[i].set_output_state(true);
 				IO[i].start_sequcence(GPIOLib::PWMSequence::esc_init);
 			}
 		}

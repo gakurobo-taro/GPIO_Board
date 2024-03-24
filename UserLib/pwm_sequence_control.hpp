@@ -18,17 +18,18 @@ namespace G24_STM32HAL::GPIOLib{
 		uint32_t length;
 	};
 
-	class ProgramableSoftPWM{
+	class ProgramablePWMLLSoft : public CommonLib::PWMLLSoft{
 		const PWMPattern *sequence_data = nullptr;
 		uint32_t sequence_count = 0;
 		uint32_t length_count = 0;
 	public:
-		CommonLib::PWMLLSoft pwm;
-		ProgramableSoftPWM(CommonLib::PWMLLSoft &&_pwm):pwm(_pwm){}
+		ProgramablePWMLLSoft(GPIO_TypeDef *_port,uint16_t _pin,float _min = 0,float _max = 1)
+				:PWMLLSoft(_port,_pin,_min,_max){
+		}
 
-		void set_duty(const uint16_t duty){
+		void set_duty_weak(const uint16_t _duty){
 			if(sequence_data == nullptr){
-				pwm.set_duty(duty);
+				PWMLLSoft::set_duty(_duty);
 			}
 		}
 
@@ -38,10 +39,10 @@ namespace G24_STM32HAL::GPIOLib{
 			length_count = 0;
 
 			length_count = sequence_data[sequence_count].length;
-			pwm.set_duty(sequence_data[sequence_count].duty);
+			set_duty(sequence_data[sequence_count].duty);
 		}
 
-		void update(void){
+		void sequence_update(void){
 			if(sequence_data != nullptr){
 				length_count  --;
 				if(length_count <= 0){
@@ -52,7 +53,7 @@ namespace G24_STM32HAL::GPIOLib{
 						return;
 					}
 					length_count = sequence_data[sequence_count].length;
-					pwm.set_duty(sequence_data[sequence_count].duty);
+					set_duty(sequence_data[sequence_count].duty);
 				}
 			}
 		}
