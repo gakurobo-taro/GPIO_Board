@@ -61,35 +61,33 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan){
-	GPIOBoard::LED_B.out_as_gpio(true);
+	GPIOBoard::LED_B.play(GPIOLib::ok);
 	GPIOBoard::can.tx_interrupt_task();
 
 }
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan){
-	GPIOBoard::LED_B.out_as_gpio(true);
+	GPIOBoard::LED_B.play(GPIOLib::ok);
 	GPIOBoard::can.tx_interrupt_task();
 }
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan){
-	GPIOBoard::LED_B.out_as_gpio(true);
+	GPIOBoard::LED_B.play(GPIOLib::ok);
 	GPIOBoard::can.tx_interrupt_task();
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
-	GPIOBoard::LED_B.out_as_gpio(true);
+	GPIOBoard::LED_B.play(GPIOLib::ok);
 	GPIOBoard::can.rx_interrupt_task();
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim == GPIOBoard::pwm_timer){
-    	for(auto &io:GPIOBoard::IO){
-    		io.update();
-    	}
-    	GPIOBoard::pin_interrupt_check();
-    	GPIOBoard::LED_G.out_as_gpio(true);
-    }else if(htim == GPIOBoard::monitor_timer){
-    	GPIOBoard::LED_R.out_as_gpio(true);
-    	GPIOBoard::monitor_task();
+    if (htim == GPIOBoard::pwm_timer.get_handler()){
+    	GPIOBoard::pwm_timer.interrupt_task();
+    }else if(htim == GPIOBoard::monitor_timer.get_handler()){
+    	GPIOBoard::monitor_timer.interrupt_task();
+    	GPIOBoard::LED_R.play(GPIOLib::ok);
+    }else if(htim == GPIOBoard::led_timer.get_handler()){
+    	GPIOBoard::led_timer.interrupt_task();
     }
 }
 
@@ -137,10 +135,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM17_Init();
   MX_TIM16_Init();
+  MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
   GPIOBoard::init();
-
-  HAL_TIM_Base_Start_IT(GPIOBoard::pwm_timer);
   //HAL_TIM_Base_Start_IT(GPIOBoard::monitor_timer);
 
   /* USER CODE END 2 */
@@ -153,9 +150,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  GPIOBoard::main_data_process();
-	  GPIOBoard::LED_R.out_as_gpio(false);
-	  GPIOBoard::LED_G.out_as_gpio(false);
-	  GPIOBoard::LED_B.out_as_gpio(false);
+	  GPIOBoard::LED_G.play(GPIOLib::ok);
   }
   /* USER CODE END 3 */
 }
