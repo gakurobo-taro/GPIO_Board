@@ -91,14 +91,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 }
 
-extern "C" {
-int _write(int file, char *ptr, int len)
-	{
-		HAL_UART_Transmit(&huart2,(uint8_t *)ptr,len,100);
-		return len;
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -149,7 +141,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  GPIOBoard::main_data_process();
+	  GPIOBoard::can_data_process();
+	  GPIOBoard::uart_data_process();
 	  GPIOBoard::LED_G.play(GPIOLib::ok);
   }
   /* USER CODE END 3 */
