@@ -27,6 +27,13 @@ namespace G24_STM32HAL::GPIOLib{
 				:PWMLLSoft(_port,_pin,_min,_max){
 		}
 
+		void set_input_mode(bool mode){
+			if(mode) LL_GPIO_SetPinMode(port, pin, LL_GPIO_MODE_INPUT);
+			else LL_GPIO_SetPinMode(port, pin, LL_GPIO_MODE_OUTPUT);
+		}
+
+		bool get_input_state(void){ return LL_GPIO_IsInputPinSet(port,pin); }
+
 		void set_duty_weak(const uint16_t _duty){
 			if(sequence_data == nullptr){
 				PWMLLSoft::set_duty(_duty);
