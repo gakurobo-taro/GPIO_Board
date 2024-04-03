@@ -24,7 +24,7 @@
 #include "can.h"
 #include "tim.h"
 #include "gpio.h"
-#include "array"
+#include "usart.h"
 
 #include <array>
 #include <bitset>
@@ -32,11 +32,9 @@
 namespace G24_STM32HAL::GPIOBoard{
 
 	inline uint8_t board_id = 0;
-	inline auto led_timer = CommonLib::InterruptionTimerHard(&htim15);
-	inline auto pwm_timer = CommonLib::InterruptionTimerHard(&htim16);
-	inline auto monitor_timer = CommonLib::InterruptionTimerHard(&htim17);
-
-
+	inline auto led_timer = CommonLib::InterruptionTimerHard{&htim15};
+	inline auto pwm_timer = CommonLib::InterruptionTimerHard{&htim16};
+	inline auto monitor_timer = CommonLib::InterruptionTimerHard{&htim17};
 
 	inline auto IO = std::array<GPIOLib::ProgramablePWMLLSoft,9>{
 			GPIOLib::ProgramablePWMLLSoft{IO1_GPIO_Port,IO1_Pin},
@@ -56,12 +54,17 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline auto LED_B = CommonLib::LEDPwm{&htim1,TIM_CHANNEL_1};
 
 	//can
-	inline auto can = CommonLib::CanComm(&hcan,
+	inline auto can = CommonLib::CanComm{&hcan,
 			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
 			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
 			CAN_RX_FIFO0,
 			CAN_FILTER_FIFO0,
-			CAN_IT_RX_FIFO0_MSG_PENDING);
+			CAN_IT_RX_FIFO0_MSG_PENDING};
+
+
+
+	inline auto uart = CommonLib::UartComm{&huart2,
+			std::make_unique<CommonLib::RingBuffer<CommonLib::SerialData,4>>()};
 
 	//monitor
 	inline auto monitor = std::bitset<0x29>{};
@@ -121,10 +124,11 @@ namespace G24_STM32HAL::GPIOBoard{
 
 	uint8_t read_board_id(void);
 
-	void main_data_process(void);
+	void can_data_process(void);
+	void uart_data_process(void);
 
-	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data);
-	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data);
+	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data,GPIOLib::CommPort port);
+	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data,GPIOLib::CommPort port);
 
 	void emergency_stop_sequence(void);
 	void emergency_stop_release_sequence(void);

@@ -11,6 +11,11 @@
 #include <stdint.h>
 
 namespace G24_STM32HAL::GPIOLib{
+	enum class CommPort{
+		UART,
+		CAN_BUS
+	};
+
 	enum class CommonReg:uint16_t{
 		NOP,
 		ID_REQEST,

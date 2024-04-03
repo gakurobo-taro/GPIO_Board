@@ -19,6 +19,8 @@ namespace G24_STM32HAL::GPIOBoard{
 		can.set_filter_mask(2, 0x00F00000, 0x00F00000, CommonLib::FilterMode::STD_AND_EXT, true);
 		can.start();
 
+		uart.rx_start();
+
 		for(auto &io:GPIOBoard::IO){
 			io.set_period(0);
 			io.set_duty(0xFFFF);
@@ -61,7 +63,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		return id;
 	}
 
-	void main_data_process(void){
+	void can_data_process(void){
 		if(can.rx_available()){
 			CommonLib::DataPacket rx_data;
 			CommonLib::CanFrame rx_frame;
@@ -69,18 +71,40 @@ namespace G24_STM32HAL::GPIOBoard{
 			CommonLib::DataConvert::decode_can_frame(rx_frame, rx_data);
 
 			if(rx_data.board_ID == board_id && rx_data.data_type == CommonLib::DataType::GPIOC_DATA){
-				execute_gpio_command(board_id,rx_data);
+				execute_gpio_command(board_id,rx_data,GPIOLib::CommPort::CAN_BUS);
 			}else if((board_id == rx_data.board_ID && rx_data.data_type == CommonLib::DataType::COMMON_DATA)
 					||(rx_data.data_type == CommonLib::DataType::COMMON_DATA_ENFORCE)){
-				execute_common_command(board_id,rx_data);
+				execute_common_command(board_id,rx_data,GPIOLib::CommPort::CAN_BUS);
 			}
 		}
 	}
 
-	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data){
+	void uart_data_process(void){
+		if(uart.rx_available()){
+			CommonLib::DataPacket rx_data;
+			CommonLib::CanFrame rx_frame;
+			CommonLib::SerialData rx_serial;
+
+			uart.rx(rx_serial);
+
+			if(CommonLib::DataConvert::slcan_to_can((char*)rx_serial.data, rx_frame)){
+				CommonLib::DataConvert::decode_can_frame(rx_frame, rx_data);
+
+				if(rx_data.board_ID == board_id && rx_data.data_type == CommonLib::DataType::GPIOC_DATA){
+					execute_gpio_command(board_id,rx_data,GPIOLib::CommPort::UART);
+				}else if((board_id == rx_data.board_ID && rx_data.data_type == CommonLib::DataType::COMMON_DATA)
+						||(rx_data.data_type == CommonLib::DataType::COMMON_DATA_ENFORCE)){
+					execute_common_command(board_id,rx_data,GPIOLib::CommPort::UART);
+				}
+			}
+		}
+	}
+
+	void execute_gpio_command(size_t board_id,const CommonLib::DataPacket &rx_data,GPIOLib::CommPort port){
 		if(rx_data.is_request){
 			CommonLib::CanFrame tx_frame;
 			CommonLib::DataPacket tx_data;
+			static CommonLib::SerialData tx_serial;
 			auto writer = tx_data.writer();
 
 			if(id_map.get(rx_data.register_ID, writer)){
@@ -91,20 +115,30 @@ namespace G24_STM32HAL::GPIOBoard{
 
 				CommonLib::DataConvert::encode_can_frame(tx_data, tx_frame);
 
-				can.tx(tx_frame);
+				switch(port){
+				case GPIOLib::CommPort::CAN_BUS:
+					can.tx(tx_frame);
+					break;
+				case GPIOLib::CommPort::UART:
+					tx_serial.size = CommonLib::DataConvert::can_to_slcan(tx_frame, (char*)tx_serial.data, tx_serial.max_size);
+					uart.tx(tx_serial);
+					break;
+				}
 			}
 		}else{
 			auto reader = rx_data.reader();
 			id_map.set(rx_data.register_ID, reader);
 		}
 	}
-	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data){
+	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data,GPIOLib::CommPort port){
 		CommonLib::DataPacket tx_data;
 		CommonLib::CanFrame tx_frame;
+		static CommonLib::SerialData tx_serial;
 
 		switch((GPIOLib::CommonReg)rx_data.register_ID){
 		case GPIOLib::CommonReg::NOP:
 			break;
+
 		case GPIOLib::CommonReg::ID_REQEST:
 			if(rx_data.is_request){
 				tx_data.board_ID = board_id;
@@ -114,15 +148,27 @@ namespace G24_STM32HAL::GPIOBoard{
 				tx_data.priority = rx_data.priority;
 
 				CommonLib::DataConvert::encode_can_frame(tx_data,tx_frame);
-				can.tx(tx_frame);
+
+				switch(port){
+				case GPIOLib::CommPort::CAN_BUS:
+					can.tx(tx_frame);
+					break;
+				case GPIOLib::CommPort::UART:
+					tx_serial.size = CommonLib::DataConvert::can_to_slcan(tx_frame, (char*)tx_serial.data, tx_serial.max_size);
+					uart.tx(tx_serial);
+					break;
+				}
 			}
 			break;
+
 		case GPIOLib::CommonReg::EMERGENCY_STOP:
 			emergency_stop_sequence();
 			break;
+
 		case GPIOLib::CommonReg::RESET_EMERGENCY_STOP:
 			emergency_stop_release_sequence();
 			break;
+
 		default:
 			break;
 		}

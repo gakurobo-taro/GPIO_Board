@@ -66,6 +66,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 #define USE_CAN
 #define USE_GPIO_LL
+#define USE_UART
 void SystemClock_Config(void);
 
 /* USER CODE END EFP */

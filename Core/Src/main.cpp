@@ -90,12 +90,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     	GPIOBoard::led_timer.interrupt_task();
     }
 }
-
-extern "C" {
-int _write(int file, char *ptr, int len)
-	{
-		HAL_UART_Transmit(&huart2,(uint8_t *)ptr,len,100);
-		return len;
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == GPIOBoard::uart.get_handle()){
+		GPIOBoard::uart.rx_interrupt_task();
+	}
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == GPIOBoard::uart.get_handle()){
+		GPIOBoard::uart.get_handle()->gState = HAL_UART_STATE_READY;
 	}
 }
 
@@ -149,8 +153,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  GPIOBoard::main_data_process();
+	  GPIOBoard::can_data_process();
+	  GPIOBoard::uart_data_process();
 	  GPIOBoard::LED_G.play(GPIOLib::ok);
+
+//	  CommonLib::CanFrame c;
+//	  c.is_ext_id = true;
+//	  CommonLib::SerialData d;
+//	  d.size = CommonLib::DataConvert::can_to_slcan(c, (char*)d.data, d.max_size);
+//	  GPIOBoard::uart.tx(d);
+//
+//	  HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
