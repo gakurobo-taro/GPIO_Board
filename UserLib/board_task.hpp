@@ -54,18 +54,23 @@ namespace G24_STM32HAL::GPIOBoard{
 	inline auto LED_B = CommonLib::LEDPwm{&htim1,TIM_CHANNEL_1};
 
 	//can
+	inline auto can_rx_buff = CommonLib::RingBuffer<CommonLib::CanFrame,4>{};
+	inline auto can_tx_buff = CommonLib::RingBuffer<CommonLib::CanFrame,4>{};
 	inline auto can = CommonLib::CanComm{&hcan,
-			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
-			std::make_unique<CommonLib::RingBuffer<CommonLib::CanFrame,4>>(),
+			std::unique_ptr<CommonLib::RingBuffer<CommonLib::CanFrame,4>>{&can_rx_buff},
+			std::unique_ptr<CommonLib::RingBuffer<CommonLib::CanFrame,4>>{&can_tx_buff},
 			CAN_RX_FIFO0,
 			CAN_FILTER_FIFO0,
-			CAN_IT_RX_FIFO0_MSG_PENDING};
+			CAN_IT_RX_FIFO0_MSG_PENDING
+	};
 
-
-
+	//uart
+	inline auto uart_rx_buff = CommonLib::RingBuffer<CommonLib::SerialData,4>{};
+	inline auto uart_tx_buff = CommonLib::RingBuffer<CommonLib::SerialData,4>{};
 	inline auto uart = CommonLib::UartComm{&huart2,
-			std::make_unique<CommonLib::RingBuffer<CommonLib::SerialData,4>>(),
-			std::make_unique<CommonLib::RingBuffer<CommonLib::SerialData,4>>()};
+			std::unique_ptr<CommonLib::RingBuffer<CommonLib::SerialData,4>>{&uart_tx_buff},
+			std::unique_ptr<CommonLib::RingBuffer<CommonLib::SerialData,4>>{&uart_rx_buff},
+	};
 
 	//monitor
 	inline auto monitor = std::bitset<0x29>{};
