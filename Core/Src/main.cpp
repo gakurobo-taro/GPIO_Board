@@ -90,6 +90,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     	GPIOBoard::led_timer.interrupt_task();
     }
 }
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == GPIOBoard::uart.get_handle()){
+		GPIOBoard::uart.rx_interrupt_task();
+	}
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == GPIOBoard::uart.get_handle()){
+		GPIOBoard::uart.get_handle()->gState = HAL_UART_STATE_READY;
+	}
+}
 
 /* USER CODE END 0 */
 

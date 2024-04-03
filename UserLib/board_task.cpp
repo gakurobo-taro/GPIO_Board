@@ -19,6 +19,8 @@ namespace G24_STM32HAL::GPIOBoard{
 		can.set_filter_mask(2, 0x00F00000, 0x00F00000, CommonLib::FilterMode::STD_AND_EXT, true);
 		can.start();
 
+		uart.rx_start();
+
 		for(auto &io:GPIOBoard::IO){
 			io.set_period(0);
 			io.set_duty(0xFFFF);
