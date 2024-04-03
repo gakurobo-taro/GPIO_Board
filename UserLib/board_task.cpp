@@ -104,7 +104,7 @@ namespace G24_STM32HAL::GPIOBoard{
 		if(rx_data.is_request){
 			CommonLib::CanFrame tx_frame;
 			CommonLib::DataPacket tx_data;
-			CommonLib::SerialData tx_serial;
+			static CommonLib::SerialData tx_serial;
 			auto writer = tx_data.writer();
 
 			if(id_map.get(rx_data.register_ID, writer)){
@@ -133,7 +133,7 @@ namespace G24_STM32HAL::GPIOBoard{
 	void execute_common_command(size_t board_id,const CommonLib::DataPacket &rx_data,GPIOLib::CommPort port){
 		CommonLib::DataPacket tx_data;
 		CommonLib::CanFrame tx_frame;
-		CommonLib::SerialData tx_serial;
+		static CommonLib::SerialData tx_serial;
 
 		switch((GPIOLib::CommonReg)rx_data.register_ID){
 		case GPIOLib::CommonReg::NOP:

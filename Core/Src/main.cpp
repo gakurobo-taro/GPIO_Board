@@ -156,6 +156,14 @@ int main(void)
 	  GPIOBoard::can_data_process();
 	  GPIOBoard::uart_data_process();
 	  GPIOBoard::LED_G.play(GPIOLib::ok);
+
+//	  CommonLib::CanFrame c;
+//	  c.is_ext_id = true;
+//	  CommonLib::SerialData d;
+//	  d.size = CommonLib::DataConvert::can_to_slcan(c, (char*)d.data, d.max_size);
+//	  GPIOBoard::uart.tx(d);
+//
+//	  HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
