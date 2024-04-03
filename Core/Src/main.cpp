@@ -99,7 +99,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart == GPIOBoard::uart.get_handle()){
-		GPIOBoard::uart.get_handle()->gState = HAL_UART_STATE_READY;
+		GPIOBoard::uart.tx_interrupt_task();
 	}
 }
 

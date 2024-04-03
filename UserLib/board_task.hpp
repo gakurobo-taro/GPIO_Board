@@ -64,6 +64,7 @@ namespace G24_STM32HAL::GPIOBoard{
 
 
 	inline auto uart = CommonLib::UartComm{&huart2,
+			std::make_unique<CommonLib::RingBuffer<CommonLib::SerialData,4>>(),
 			std::make_unique<CommonLib::RingBuffer<CommonLib::SerialData,4>>()};
 
 	//monitor
