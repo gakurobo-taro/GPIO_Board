@@ -71,9 +71,10 @@ namespace G24_STM32HAL::GPIOLib{
 
 	namespace PWMSequence{
 		inline const PWMPattern esc_init[]{
-				{0,500},
+				{0,1000},
 				{100,2000},
-				{50,2000},
+				{50,10000},
+				{50,1000},
 				{0,0},
 		};
 	}

@@ -81,15 +81,16 @@ namespace G24_STM32HAL::GPIOBoard{
 
 	inline auto esc_mode = std::bitset<IO.size()>{};
 	inline void set_esc_mode(uint16_t val){
-		esc_mode = std::bitset<IO.size()>{val};
+		auto tmp = std::bitset<IO.size()>{val};
 		for(size_t i = 0; i < esc_mode.size(); i++){
-			if(esc_mode.test(i)){
+			if(tmp.test(i) && !esc_mode.test(i)){
 				IO[i].set_input_mode(false);
 				IO[i].set_period(1000);
 				IO[i].set_output_state(true);
 				IO[i].start_sequcence(GPIOLib::PWMSequence::esc_init);
 			}
 		}
+		esc_mode = tmp;
 	}
 
 	inline auto id_map = CommonLib::IDMapBuilder()
