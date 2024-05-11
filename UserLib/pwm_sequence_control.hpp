@@ -18,6 +18,8 @@ namespace G24_STM32HAL::GPIOLib{
 		uint32_t length;
 	};
 
+	inline constexpr PWMPattern end_sequence = {0,0};
+
 	class ProgramablePWMLLSoft : public CommonLib::PWMLLSoft{
 		const PWMPattern *sequence_data = nullptr;
 		uint32_t sequence_count = 0;
@@ -73,9 +75,9 @@ namespace G24_STM32HAL::GPIOLib{
 		inline const PWMPattern esc_init[]{
 				{0,1000},
 				{100,2000},
-				{50,10000},
+				{50,5000},
 				{50,1000},
-				{0,0},
+				end_sequence,
 		};
 	}
 
